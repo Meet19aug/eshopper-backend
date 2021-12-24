@@ -1,4 +1,5 @@
 const express = require("express");
+const errorMiddleware = require("./middleware/error")
 
 const app = express();
 
@@ -10,5 +11,9 @@ const product = require("./routes/productRouts")
 
 //The app.use() function is used to mount the specified middleware function(s) at the path which is being specified. It is mostly used to set up middleware for your application.
 app.use("/api/v1", product);
+
+//Middleware for error
+app.use(errorMiddleware)
+
 
 module.exports = app;
