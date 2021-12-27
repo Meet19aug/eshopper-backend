@@ -1,6 +1,7 @@
 const app = require("./app");
 const dotenv = require("dotenv");
 
+//for connecting to database.
 const connectDatabase = require("./config/database")
 
 //Handling Uncaught Exception console.log(youtube)
@@ -14,7 +15,6 @@ process.on("uncaughtException", (err)=>{
 })
 
 //config
-
 dotenv.config({path: "backend/config/config.env"})
 
 //Connecting to database [server-database]
