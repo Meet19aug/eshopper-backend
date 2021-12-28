@@ -45,6 +45,7 @@ const userSchema = new mongoose.Schema({
 });
 // When userSchema is saved to database before that this script run <SAVE, UPDATE both time so we required condition to distinguise betwwen that 2 event>
 // here we uses this keyword inside function which is not supported in arrow function. 
+// Used to encrypt password for first time. 
 userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) {
         next();
@@ -52,12 +53,12 @@ userSchema.pre("save", async function (next) {
     this.password = await bcrypt.hash(this.password, 10)
 })
 
-//JWT TOKEN
+// To genrate JWT TOKEN created from unique id of user.
 userSchema.methods.getJWTToken = function () {
-    return jwt.sign({ id: this._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE, })
+    return jwt.sign({ id: this._id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE})
 }
 
-//Compare Password
+//Compare Password with inbuilt functions
 userSchema.methods.comparePassword = async function(enteredPassword){
     return bcrypt.compare(enteredPassword, this.password);
 }
@@ -65,7 +66,7 @@ userSchema.methods.comparePassword = async function(enteredPassword){
 // Genrating Password Reset Token
 userSchema.methods.getResetPasswordToken = function(){
     
-    //Genrating Token
+    //Genrating Token of 20 hex character
     const resetToken = crypto.randomBytes(20).toString("hex");
 
     //Hasing and adding ResetPassword Token to userSchema

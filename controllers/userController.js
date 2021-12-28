@@ -74,7 +74,8 @@ exports.forgotPassword = catchAsyncError(async (req, res, next) => {
 
     //Get Reset Password Token
     const resetToken = user.getResetPasswordToken();
-
+    
+    //To save reset token temporary in the database.
     await user.save({ validateBeforeSave: false });
 
     const resetPasswordUrl = `${req.protocol}://${req.get("host")}/api/v1/password/reset/${resetToken}`;
@@ -84,7 +85,7 @@ exports.forgotPassword = catchAsyncError(async (req, res, next) => {
     try {
         await sendEmail({
             email:user.email,
-            sunject:`EShopper Password Recovery`,
+            subject:`EShopper Password Recovery`,
             message,
         });
 
@@ -104,7 +105,7 @@ exports.forgotPassword = catchAsyncError(async (req, res, next) => {
 
 // Reset Password 
 exports.resetPassword = catchAsyncError(async (req, res, next) => {
-    // Creating token hash 
+    // Creating token hash Refer: User Model for below line Code Reusability.
     const resetPasswordToken = crypto.createHash("sha256").update(req.params.token).digest("hex");
 
     const user = await User.findOne({
@@ -130,8 +131,136 @@ exports.resetPassword = catchAsyncError(async (req, res, next) => {
     await user.save();
 
     sendToken(user, 200,res);
-
-
-
 });
+
+// Get User Detail
+// This will only run if user is login,
+exports.getUserDetails = catchAsyncError(async(req,res,next)=>{
+
+    const user=await User.findById(req.user.id);
+    // User is Login so we get all user details from req.user REFER: auth.js
+
+    res.status(200).json({
+        success: true,
+        user,
+    });
+    
+});
+
+
+// Update User Password
+// This will only run if user is login,
+exports.updatePassword = catchAsyncError(async(req,res,next)=>{
+    
+    //WARNING:  const { oldPassword, newPassword, confirmPassword } = req.body; as user password confidentaility is lost due to this.
+
+    const user=await User.findById(req.user.id).select("+password");
+    // User is Login so we get all user details from req.user REFER: auth.js
+
+    const isPasswordMatched = await user.comparePassword(req.body.oldPassword);
+
+    if (!isPasswordMatched) {
+        return next(new ErrorhHndler("Invalid old-password", 401));
+    }
+
+    if(req.body.newPassword !== req.body.confirmPassword){
+        return next(new ErrorhHndler("Password Doesn't Matched", 401));
+    }
+
+    user.password=req.body.newPassword;
+
+    await user.save();
+    sendToken(user,200,res);
+    
+});
+
+
+// Update User Detail
+// This will only run if user is login,
+exports.updateProfile = catchAsyncError(async(req,res,next)=>{
+    const newUserData={
+        email: req.body.email,
+        name: req.body.name,
+    };
+    // TODO: We will add Cloudinary Later
+
+    const user= await User.findByIdAndUpdate(req.user.id, newUserData,{
+        new: true,
+        runValidators: true,
+        useFindAndModify: false,
+    });
+
+    res.status(200).json({
+        success:true,
+    });
+    
+});
+
+// Get All User (admin)
+exports.getAllUser = catchAsyncError(async(req,res,next)=>{
+    const users=  await User.find();
+    
+    res.status(200).json({
+        success: true,
+        users,
+    })
+})
+
+// Get Single User (admin)
+exports.getSingleUser = catchAsyncError(async(req,res,next)=>{
+    const user= await User.findById(req.params.id);
+
+    if(!user){
+        return next(new ErrorHandler(`User Does not exist with id: ${req.params.id}`,404));
+    }
+
+    res.status(200).json({
+        success: true,
+        user,
+    })
+})
+
+// Update User Role (admin)
+exports.updateUserRole = catchAsyncError(async(req,res,next)=>{
+    
+    const newUserData={
+        name: req.body.name,
+        email: req.body.email,
+        role: req.body.role,
+    };
+
+    const user= await User.findByIdAndUpdate(req.params.id, newUserData,{
+        new: true,
+        runValidators: true,
+        useFindAndModify: false,
+    });
+
+    res.status(200).json({
+        success:true,
+        message:"User Role Updated"
+    });
+    
+});
+
+// delete User  (admin)
+exports.deleteUser = catchAsyncError(async(req,res,next)=>{
+
+    const user = await User.findById(req.params.id);
+
+    if(!user){
+        return next(new ErrorHandler(`User Does not exist with id: ${req.params.id}`,404));
+    }
+
+    await user.remove();
+    // We will remove cloudnery later
+
+    res.status(200).json({
+        success: true,
+        message:"User Deleted successfully."
+    });
+    
+});
+
+
+
 
