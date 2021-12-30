@@ -11,10 +11,15 @@ app.use(cookieParser());
 //Routs imports
 const product = require("./routes/productRouts")
 const user = require("./routes/userRouts")
+const order = require("./routes/orderRouts")
+
 
 //The app.use() function is used to mount the specified middleware function(s) at the path which is being specified. It is mostly used to set up middleware for your application.
 app.use("/api/v1", product);
 app.use("/api/v1/",user);
+app.use("/api/v1/",order);
+
+
 
 //Middleware for error
 app.use(errorMiddleware)
