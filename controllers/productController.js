@@ -5,33 +5,42 @@ const ApiFeatures = require("../utils/apifeatures");
 
 //Create Product -- Admin
 exports.createProduct = catchAsyncError(async (req, res, next) => {
-
     req.body.user = req.user.id;
 
     const product = await Product.create(req.body);
 
     res.status(201).json({
         success: true,
-        product
-    })
+        product,
+    });
 });
 
 //get All  Products
 exports.getAllProducts = catchAsyncError(async (req, res) => {
-
     const resultPerPage = 8;
-    // Inbuild function for countDocuments inside the product model. inshort total number of products 
     const productsCount = await Product.countDocuments();
 
-    const apiFeature = new ApiFeatures(Product.find(), req.query).search().filter().pagination(resultPerPage);
-    const products = await apiFeature.query;
+    const apiFeature = new ApiFeatures(Product.find(), req.query)
+        .search()
+        .filter();
+
+    let products = await apiFeature.query;
+
+    let filteredProductsCount = products.length;
+ 
+    apiFeature.pagination(resultPerPage);
+
+    products = await apiFeature.query.clone();
 
     res.status(200).json({
         success: true,
         products,
-        productsCount
-    })
-})
+        productsCount,
+        resultPerPage,
+        filteredProductsCount,
+    });
+
+});
 
 //Get Product Details
 exports.getProductDetails = catchAsyncError(async (req, res, next) => {
@@ -39,13 +48,11 @@ exports.getProductDetails = catchAsyncError(async (req, res, next) => {
     if (!product) {
         return next(new ErrorhHndler("Product not found.", 404));
     }
-
     res.status(200).json({
         success: true,
         product,
-    })
-})
-
+    });
+});
 
 // Update Product -- Admin
 exports.updateProduct = catchAsyncError(async (req, res, next) => {
@@ -58,18 +65,17 @@ exports.updateProduct = catchAsyncError(async (req, res, next) => {
     product = await Product.findByIdAndUpdate(req.params.id, req.body, {
         new: true,
         runValidators: true,
-        useFindAndModify: false
+        useFindAndModify: false,
     });
 
     res.status(200).json({
         success: true,
-        product
-    })
-})
+        product,
+    });
+});
 
 // Delete Product -- Admin
 exports.deleteProduct = catchAsyncError(async (req, res, next) => {
-
     let product = await Product.findById(req.params.id);
 
     if (!product) {
@@ -80,14 +86,13 @@ exports.deleteProduct = catchAsyncError(async (req, res, next) => {
 
     res.status(200).json({
         success: true,
-        message: "Product Deleted Successfully"
-    })
-})
+        message: "Product Deleted Successfully",
+    });
+});
 
 // Create a new Review or update the review
 exports.createProductReview = catchAsyncError(async (req, res, next) => {
-
-    const { rating, comment, productId } = req.body
+    const { rating, comment, productId } = req.body;
 
     const review = {
         user: req.user._id,
@@ -99,13 +104,15 @@ exports.createProductReview = catchAsyncError(async (req, res, next) => {
     const product = await Product.findById(productId);
 
     // isReviewed is finding in review user id is same as login id <Refer : productModel.js>
-    const isReviewed = product.reviews.find(rev => rev.user.toString() === req.user._id.toString())
+    const isReviewed = product.reviews.find(
+        (rev) => rev.user.toString() === req.user._id.toString()
+    );
 
     if (isReviewed) {
-        product.reviews.forEach(rev => {
+        product.reviews.forEach((rev) => {
             if (rev.user.toString() === req.user._id.toString())
                 (rev.rating = rating), (rev.comment = comment);
-        })
+        });
     } else {
         // This will push review in reviews stack or array and then count the length of array.
         product.reviews.push(review);
@@ -122,9 +129,8 @@ exports.createProductReview = catchAsyncError(async (req, res, next) => {
     await product.save({ validateBeforeSave: false });
     res.status(200).json({
         success: true,
-    })
-})
-
+    });
+});
 
 // Get All Review of Product
 exports.getProductReviews = catchAsyncError(async (req, res, next) => {
@@ -137,9 +143,8 @@ exports.getProductReviews = catchAsyncError(async (req, res, next) => {
     res.status(200).json({
         success: true,
         reviews: product.reviews,
-    })
-
-})
+    });
+});
 
 // Delete Review
 exports.deleteReview = catchAsyncError(async (req, res, next) => {
@@ -149,7 +154,9 @@ exports.deleteReview = catchAsyncError(async (req, res, next) => {
         return next(new ErrorhHndler("Product not found.", 404));
     }
 
-    const reviews = product.reviews.filter((rev) => rev._id.toString() !== req.query.id.toString());
+    const reviews = product.reviews.filter(
+        (rev) => rev._id.toString() !== req.query.id.toString()
+    );
 
     //overall New Updated comman rating for product ratings overall, rating for one user rating
     let avg = 0;
@@ -161,23 +168,22 @@ exports.deleteReview = catchAsyncError(async (req, res, next) => {
 
     const numOfReviews = reviews.length;
 
-    await Product.findByIdAndUpdate(req.query.productId, {
-        reviews,
-        ratings,
-        numOfReviews
-    }, {
-        new: true,
-        runValidators: true,
-        useFindAndModify: false,
-    })
+    await Product.findByIdAndUpdate(
+        req.query.productId,
+        {
+            reviews,
+            ratings,
+            numOfReviews,
+        },
+        {
+            new: true,
+            runValidators: true,
+            useFindAndModify: false,
+        }
+    );
 
     res.status(200).json({
         success: true,
         reviews: product.reviews,
-    })
-
-})
-
-
-
-
+    });
+});
