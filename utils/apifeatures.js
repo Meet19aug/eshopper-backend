@@ -16,7 +16,6 @@ class ApiFeatures {
                 $options:"i", //case  insensitive
             }
         }:{};
-        console.log("Inside Search... keyword is: ",keyword);
         this.query = this.query.find({...keyword})
         return this;
     }

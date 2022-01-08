@@ -1,12 +1,18 @@
 const express = require("express");
 const app = express();
 const cookieParser = require("cookie-parser");
+const bodyParser = require("body-parser");
+// Cloudinary added
+const fileUpload = require("express-fileupload");
 
 const errorMiddleware = require("./middleware/error")
 
 // When you requred to use POST & PUT REQUESTS as in this request we are sendind data or json OBject to server not needed for DELETE & GET
 app.use(express.json());
 app.use(cookieParser());
+//for Cloudinary Use
+app.use(bodyParser.urlencoded({extended:true}));
+app.use(fileUpload());
 
 //Routs imports
 const product = require("./routes/productRouts")

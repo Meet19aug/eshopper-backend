@@ -5,17 +5,22 @@ const sendToken = require("../utils/jwtToken");
 const ErrorHandler = require("../utils/errorhandler");
 const sendEmail = require("../utils/sendEmail.js")
 const crypto = require("crypto");
-
-
+const cloudinary = require("cloudinary");
 
 //Register a User
 exports.registerUser = catchAsyncError(async (req, res, next) => {
+
+    const myCloud = await cloudinary.v2.uploader.upload(req.body.avatar, {
+        folder: "avatars",
+        width: 150,
+        crop : "scale",
+    });
     const { name, email, password } = req.body;
     const user = await User.create({
         name, email, password,
         avtar: {
-            public_id: "this is sample public id",
-            url: "profile url"
+            public_id: myCloud.public_id,
+            url: myCloud.secure_url,
         }
     });
     //Utility send token jwtToken 
