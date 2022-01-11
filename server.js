@@ -1,6 +1,6 @@
 const app = require("./app");
 const dotenv = require("dotenv");
-const cloudinary = require("cloudinary");
+const cloudinary = require("cloudinary"); // for image storing online.
 
 //for connecting to database.
 const connectDatabase = require("./config/database")
