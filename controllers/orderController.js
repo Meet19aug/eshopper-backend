@@ -94,10 +94,12 @@ exports.updateOrder = catchAsyncError(async (req, res, next) => {
     }
 
     // For Updating Stock as product is delivered from the main warehouse
-    order.orderItems.forEach(async (order)=>{
-        await updateStock(order.product, order.quantity);
-    });
-
+    if(req.body.status === "Shipped"){
+        order.orderItems.forEach(async (order)=>{
+            await updateStock(order.product, order.quantity);
+        });
+    }
+    
     order.orderStatus = req.body.status;
 
     if(req.body.status === "Delivered"){
